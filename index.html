@@ -395,6 +395,48 @@ body {
 .m-btn.light { background: var(--bg2); color: var(--text2); border: 1.5px solid var(--line); }
 .m-btn.red { background: var(--pink); color: #fff; }
 
+/* 🌳 성장 로그 나무 스타일 */
+.tree-card {
+  position: relative;
+  width: 100%; height: 230px;
+  background: #fdfbf7; border: 1.5px solid var(--line);
+  border-radius: 20px; margin: 14px 0; overflow: hidden;
+}
+.tree-leaves {
+  position: absolute; top: 25px; left: 50%; transform: translateX(-50%);
+  width: 130px; height: 130px; background: #22c55e; border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.tree-leaves-2 {
+  position: absolute; top: 55px; left: 50%; transform: translateX(-50%);
+  width: 160px; height: 100px; background: #16a34a; border-radius: 40px;
+}
+.tree-trunk {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 65px; background: #78350f; border-radius: 4px;
+}
+.pink-star-sticker {
+  position: absolute; width: 18px; height: 18px; background: #ff69b4;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  animation: stickerPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes stickerPop {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(-45deg); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1) rotate(var(--r, 0deg)); opacity: 1; }
+}
+.log-box {
+  max-height: 110px; overflow-y: auto; text-align: left;
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 6px; background: var(--bg2); font-size: 12px;
+}
+.log-row {
+  display: flex; justify-content: space-between;
+  padding: 6px 8px; border-bottom: 1px solid var(--line);
+}
+.log-row:last-child { border-bottom: none; }
+
 /* Toast */
 .toast {
   position: fixed; top: 20px; left: 50%;
@@ -411,7 +453,6 @@ body {
 </head>
 <body>
 
-<!-- ═══════════════════ INTRO ═══════════════════ -->
 <div class="screen active" id="introScreen">
   <div class="intro-wrap" style="margin:auto">
     <div class="brand">
@@ -452,7 +493,6 @@ body {
   </div>
 </div>
 
-<!-- ═══════════════════ AUTH ═══════════════════ -->
 <div class="screen" id="authScreen">
   <div class="auth-wrap" style="margin:auto">
     <button class="back-btn" onclick="goScreen('introScreen')">← Back</button>
@@ -480,7 +520,6 @@ body {
   </div>
 </div>
 
-<!-- ═══════════════════ GAME ═══════════════════ -->
 <div class="screen" id="gameScreen">
   <div class="g-header">
     <div class="h-left">
@@ -488,13 +527,13 @@ body {
       <div class="h-user" id="hUser">Guest</div>
     </div>
     <div class="h-right">
+      <button class="ico-btn" id="treeNavBtn" onclick="openTreeModal()" style="display:none; font-size: 14px;">🌲</button>
       <span class="seed-tag" id="seedTag">#00000</span>
       <button class="ico-btn" onclick="goScreen('introScreen')">⌂</button>
     </div>
   </div>
 
   <div class="g-body">
-    <!-- Timer -->
     <div class="timer-block">
       <div class="timer-num" id="timerNum">00:00</div>
       <div class="errs-wrap">
@@ -503,18 +542,14 @@ body {
       </div>
     </div>
 
-    <!-- Progress -->
     <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
 
-    <!-- Grid -->
     <div class="grid-shell">
       <div class="sudoku-grid" id="grid"></div>
     </div>
 
-    <!-- Numpad -->
     <div class="numpad" id="numpad"></div>
 
-    <!-- Controls -->
     <div class="ctrl-bar">
       <button class="c-btn" onclick="doUndo()">
         <span class="c-icon">↩</span>
@@ -538,7 +573,6 @@ body {
       </button>
     </div>
 
-    <!-- Compete panel -->
     <div class="cmp-panel" id="cmpPanel" style="display:none">
       <div class="cmp-title">Compete</div>
       <div class="cmp-row">
@@ -555,7 +589,6 @@ body {
   </div>
 </div>
 
-<!-- ═══ MODAL: Confirm New Game ═══ -->
 <div class="overlay" id="confirmModal">
   <div class="modal">
     <div class="m-icon">⟳</div>
@@ -568,7 +601,6 @@ body {
   </div>
 </div>
 
-<!-- ═══ MODAL: Win ═══ -->
 <div class="overlay" id="winModal">
   <div class="modal">
     <div class="m-icon">🎉</div>
@@ -576,8 +608,29 @@ body {
     <div class="m-time" id="winTime">00:00</div>
     <div class="m-body" id="winBody">Brilliant. You cracked it.</div>
     <div class="m-btns">
+      <button class="m-btn red" id="winTreeBtn" onclick="closeModal('winModal'); openTreeModal()" style="display:none">🌲 내 성장 나무 보기</button>
       <button class="m-btn dark" onclick="closeModal('winModal'); askNewGame()">Play Again</button>
       <button class="m-btn light" onclick="closeModal('winModal')">View Board</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="treeModal">
+  <div class="modal" style="max-width: 340px;">
+    <div class="m-title" id="treeUserTitle" style="font-size: 28px;">GROWTH TREE</div>
+    <div class="m-body" style="margin-bottom: 10px;">완료한 스도쿠: <span id="treeClearCount" style="font-weight:700; color:var(--pink);">0</span>개 스티커</div>
+    
+    <div class="tree-card">
+      <div class="tree-trunk"></div>
+      <div class="tree-leaves-2"></div>
+      <div class="tree-leaves"></div>
+      <div id="treeStickers"></div>
+    </div>
+
+    <div class="log-box" id="treeLogBox"></div>
+
+    <div class="m-btns" style="margin-top: 14px;">
+      <button class="m-btn dark" onclick="closeModal('treeModal'); if(!G.done) resumeTimer()">닫기</button>
     </div>
   </div>
 </div>
@@ -618,6 +671,7 @@ function fillBoard(b,pos,rng) {
   if(b[pos]!==0) return fillBoard(b,pos+1,rng);
   for(const n of shuffle([1,2,3,4,5,6,7,8,9],rng)){
     if(isValid(b,pos,n)){
+      b[sol.length ? pos : pos]=n; /* safe check */
       b[pos]=n;
       if(fillBoard(b,pos+1,rng)) return true;
       b[pos]=0;
@@ -664,6 +718,7 @@ const G = {
   timer:0, running:false, _ti:null,
   done:false,
   roomCode:null, scores:[],
+  userData: { clearCount: 0, history: [] } // 유저 저장용 데이터 확장
 };
 
 /* ═══════════════════════════════════════════
@@ -683,17 +738,32 @@ function setTab(t){
   });
 }
 function cap(s){ return s[0].toUpperCase()+s.slice(1); }
+
 function authMember(){
   const v=document.getElementById('memberCode').value.trim();
   if(!v||v.length<3){showToast('Enter a code (min 3 chars)');return;}
-  G.user=v.toUpperCase(); G.isGuest=false; enterGame();
+  G.user=v.toUpperCase(); G.isGuest=false;
+  
+  // 브라우저 로컬 저장소에서 데이터 불러오기
+  const saved = localStorage.getItem('sudoku_user_' + G.user);
+  if(saved) {
+    G.userData = JSON.parse(saved);
+  } else {
+    G.userData = { clearCount: 0, history: [] };
+    localStorage.setItem('sudoku_user_' + G.user, JSON.stringify(G.userData));
+  }
+  enterGame();
 }
 function authGuest(){
-  G.user='GUEST_'+Math.floor(Math.random()*9999); G.isGuest=true; enterGame();
+  G.user='GUEST_'+Math.floor(Math.random()*9999); G.isGuest=true;
+  G.userData = { clearCount: 0, history: [] };
+  enterGame();
 }
 function enterGame(){
   G.mode=pendingMode;
   document.getElementById('hUser').textContent = G.isGuest ? 'Guest' : G.user;
+  document.getElementById('treeNavBtn').style.display = G.isGuest ? 'none' : 'block'; // 게스트는 나무 숨김
+  
   const panel=document.getElementById('cmpPanel');
   if(G.mode==='compete'||G.mode==='join'){
     panel.style.display='block';
@@ -846,11 +916,30 @@ function toggleNote(){
 function checkWin(){
   if(!G.board.every((v,i)=>v===G.solution[i])) return;
   G.done=true; stopTimer();
+
+  // 🌳 회원일 때만 클리어 기록을 브라우저 DB에 실시간 세이브
+  if(!G.isGuest) {
+    G.userData.clearCount++;
+    G.userData.history.push({
+      seed: G.seed,
+      time: G.timer,
+      date: new Date().toLocaleDateString()
+    });
+    localStorage.setItem('sudoku_user_' + G.user, JSON.stringify(G.userData));
+  }
+
   setTimeout(()=>{
     document.getElementById('winTime').textContent=fmt(G.timer);
     const rank=recordScore();
-    document.getElementById('winBody').textContent=
-      rank?`Room rank: #${rank}`:'Brilliant. You cracked it.';
+    
+    // 승리 팝업 메시지 다각화 및 나무 이동 버튼 노출 조정
+    if(G.isGuest) {
+      document.getElementById('winTreeBtn').style.display = 'none';
+      document.getElementById('winBody').textContent = rank ? `Room rank: #${rank}` : 'Brilliant. You cracked it.';
+    } else {
+      document.getElementById('winTreeBtn').style.display = 'block';
+      document.getElementById('winBody').textContent = `나무에 핑크 별 스티커가 붙었습니다! (총 ${G.userData.clearCount}개)`;
+    }
     openModal('winModal');
   },400);
 }
@@ -946,6 +1035,54 @@ function renderScores(){
 }
 
 /* ═══════════════════════════════════════════
+   🌳 성장 나무 모달 제어 함수
+═══════════════════════════════════════════ */
+function openTreeModal() {
+  if(G.isGuest) return;
+  stopTimer();
+  
+  document.getElementById('treeUserTitle').textContent = `${G.user}님의 성장 나무`;
+  document.getElementById('treeClearCount').textContent = G.userData.clearCount;
+
+  // 1. 핑크 별 스티커 배치 (열 때마다 무작위로 섞이지 않게 수학 규칙 기반 고정 난수 배치)
+  const stickerContainer = document.getElementById('treeStickers');
+  stickerContainer.innerHTML = '';
+  
+  for(let i=0; i<G.userData.clearCount; i++) {
+    const star = document.createElement('div');
+    star.className = 'pink-star-sticker';
+    
+    // 황금각 피보나치 나선 형태 분산 알고리즘을 사용해 잎사귀 컨테이너 내부(중심 x:50%, y:90px)에 이쁘게 누적 안착
+    const angle = i * 2.39996; // Golden angle in radians
+    const radius = Math.min(55, Math.sqrt(i + 1) * 9.5); // 바깥쪽으로 예쁘게 퍼짐
+    
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius * 0.75; // 살짝 납작한 구도로 나무 형태에 맞춤
+    
+    star.style.left = `calc(50% + ${x}px)`;
+    star.style.top = `${85 + y}px`;
+    star.style.setProperty('--r', `${(i * 35) % 360}deg`); // 각도 개성 부여
+    
+    stickerContainer.appendChild(star);
+  }
+
+  // 2. 하단 리스트 로그 기록 바인딩
+  const logBox = document.getElementById('treeLogBox');
+  if(!G.userData.history || G.userData.history.length === 0) {
+    logBox.innerHTML = '<div style="text-align:center;color:var(--text3);padding:10px;">완료한 기록이 없습니다. 먼저 스도쿠를 클리어해보세요!</div>';
+  } else {
+    logBox.innerHTML = G.userData.history.map((h, idx) => `
+      <div class="log-row">
+        <span>🧩 #${String(h.seed).padStart(5,'0')} (${h.date})</span>
+        <span style="font-weight:700; color:var(--pink);">${fmt(h.time)}</span>
+      </div>
+    `).reverse().join(''); // 최근 기록이 가장 위로 올라오도록 정렬
+  }
+
+  openModal('treeModal');
+}
+
+/* ═══════════════════════════════════════════
    MODAL / TOAST
 ═══════════════════════════════════════════ */
 function openModal(id){ document.getElementById(id).classList.add('open'); }
@@ -959,18 +1096,7 @@ function showToast(msg){
 /* ═══════════════════════════════════════════
    KEYBOARD
 ═══════════════════════════════════════════ */
-document.addEventListener('keydown',e=>{
-  if(G.selected===-1) return;
-  const n=parseInt(e.key);
-  if(n>=1&&n<=9) doInput(n);
-  else if(e.key==='Backspace'||e.key==='Delete') doErase();
-  else if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();doUndo();}
-  else if(e.key==='n') toggleNote();
-  else {
-    const d={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1};
-    if(d[e.key]!=null){e.preventDefault();const nx=G.selected+d[e.key];if(nx>=0&&nx<81)selectCell(nx);}
-  }
-});
+document.addEventListener('keydown',e=>{\n  if(G.selected!==-1) {\n    const n=parseInt(e.key);\n    if(n>=1&&n<=9) doInput(n);\n    else if(e.key==='Backspace'||e.key==='Delete') doErase();\n    else if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();doUndo();}\n    else if(e.key==='n') toggleNote();\n    else {\n      const d={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1};\n      if(d[e.key]!=null){e.preventDefault();const nx=G.selected+d[e.key];if(nx>=0&&nx<81)selectCell(nx);}\n    }\n  }\n});
 
 /* ═══════════════════════════════════════════
    BOOT
