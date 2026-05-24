@@ -6,7 +6,31 @@
 <title>SUDOKU</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+<!-- ══ FIREBASE SDK ══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <style>
+/* ══ FIREBASE SETUP OVERLAY ══ */
+#fbSetup{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:32px;}
+#fbSetup.hidden{display:none;}
+.fb-inner{width:100%;max-width:380px;}
+.fb-logo{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:8px;color:#111;line-height:1;margin-bottom:4px;}
+.fb-tag{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#e8185a;margin-bottom:32px;display:block;}
+.fb-title{font-size:16px;font-weight:700;color:#111;margin-bottom:6px;}
+.fb-desc{font-size:13px;color:#666;line-height:1.6;margin-bottom:24px;}
+.fb-steps{background:#f5f5f5;border-radius:14px;padding:18px 20px;margin-bottom:20px;font-size:12px;color:#444;line-height:2;}
+.fb-steps a{color:#e8185a;font-weight:600;}
+.fb-steps code{background:#e0e0e0;border-radius:4px;padding:1px 5px;font-size:11px;}
+.fb-field{width:100%;padding:14px 16px;background:#f5f5f5;border:1.5px solid #e0e0e0;border-radius:12px;font-family:'Outfit',sans-serif;font-size:13px;color:#111;outline:none;margin-bottom:10px;transition:border-color 0.2s;}
+.fb-field:focus{border-color:#e8185a;background:#fff;}
+.fb-field::placeholder{color:#aaa;}
+.fb-btn{width:100%;padding:16px;background:#e8185a;border:none;border-radius:12px;color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:8px;}
+.fb-btn:active{opacity:0.8;}
+.fb-err{font-size:12px;color:#e8185a;text-align:center;margin-top:4px;min-height:16px;}
+.fb-saved-note{font-size:11px;color:#999;text-align:center;margin-top:8px;}
+
 :root{
   --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;
   --line:#e0e0e0;--line2:#c8c8c8;
@@ -22,7 +46,6 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .screen{display:none;min-height:100vh;flex-direction:column;}
 .screen.active{display:flex;}
 
-/* ── SHARED COMPONENTS ── */
 .back-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--text2);background:none;border:none;cursor:pointer;margin-bottom:36px;}
 .back-btn:active{color:var(--pink);}
 .brand-logo{font-family:'Bebas Neue',sans-serif;font-size:72px;letter-spacing:10px;color:var(--black);line-height:1;}
@@ -55,44 +78,45 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .tab{flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--line);background:var(--bg);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.18s;}
 .tab.on{border-color:var(--pink);background:var(--pink-bg);color:var(--pink);}
 
-/* ══════════ INTRO ══════════ */
+/* ── INTRO ── */
 #introScreen{align-items:center;justify-content:center;padding:48px 28px 60px;}
 .intro-wrap{width:100%;max-width:340px;}
 .brand{text-align:center;margin-bottom:48px;}
 
-/* ══════════ AUTH ══════════ */
+/* ── AUTH ── */
 #authScreen{align-items:center;justify-content:center;padding:48px 28px;}
 .auth-wrap{width:100%;max-width:340px;}
 .auth-title{font-family:'Bebas Neue',sans-serif;font-size:46px;letter-spacing:4px;color:var(--black);line-height:1;margin-bottom:6px;}
 .auth-sub{font-size:13px;color:var(--text3);margin-bottom:32px;}
 
-/* ══════════ PROFILE ══════════ */
-#profileScreen{align-items:center;justify-content:flex-start;padding:0;}
-.profile-header{width:100%;background:var(--black);padding:40px 28px 32px;display:flex;flex-direction:column;align-items:center;gap:0;}
+/* ── PROFILE ── */
+#profileScreen{align-items:center;justify-content:flex-start;padding:0;overflow-y:auto;}
+.profile-header{width:100%;background:var(--black);padding:40px 28px 32px;display:flex;flex-direction:column;align-items:center;}
 .profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--pink);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:32px;color:#fff;letter-spacing:2px;margin-bottom:14px;}
 .profile-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:#fff;}
 .profile-stars{display:flex;gap:16px;margin-top:16px;}
 .star-pill{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:30px;background:rgba(255,255,255,0.08);}
-.star-pill .s-icon{font-size:20px;}
-.star-pill .s-count{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;letter-spacing:2px;}
-.star-pill .s-label{font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase;}
+.s-icon{font-size:20px;}
+.s-count{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;letter-spacing:2px;}
+.s-label{font-size:10px;font-weight:600;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase;}
 .profile-body{width:100%;max-width:400px;padding:24px 20px;display:flex;flex-direction:column;gap:16px;}
 .profile-section-title{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
 .stat-row{display:flex;gap:10px;}
 .stat-box{flex:1;padding:16px;background:var(--bg2);border-radius:14px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;}
 .stat-num{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:var(--black);}
 .stat-lbl{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);}
-.saved-card{padding:14px 16px;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.18s;}
+.saved-card{padding:14px 16px;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.18s;margin-bottom:8px;}
 .saved-card:active{border-color:var(--pink);background:var(--pink-bg);}
 .saved-icon{font-size:22px;}
 .saved-info{flex:1;}
 .saved-info h4{font-size:14px;font-weight:600;}
 .saved-info p{font-size:11px;color:var(--text3);margin-top:2px;}
-.saved-time{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--text2);}
-.resume-btn{padding:8px 14px;background:var(--pink);border:none;border-radius:10px;color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;}
+.saved-time{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--text2);}
+.resume-btn{padding:8px 14px;background:var(--pink);border:none;border-radius:10px;color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;}
 .no-saves{text-align:center;padding:20px;color:var(--text3);font-size:13px;}
+.loading-text{text-align:center;padding:16px;color:var(--text3);font-size:13px;}
 
-/* ══════════ BATTLE SETUP ══════════ */
+/* ── BATTLE SETUP ── */
 #battleSetupScreen{align-items:center;justify-content:center;padding:48px 28px;}
 .bs-wrap{width:100%;max-width:340px;}
 .step-indicator{display:flex;gap:6px;margin-bottom:32px;}
@@ -105,10 +129,15 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .pc-btn span{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--text3);text-transform:uppercase;}
 .pc-btn.selected{border-color:var(--pink);background:var(--pink-bg);}
 .pc-btn.selected span{color:var(--pink);}
-.battle-link-box{padding:16px;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;word-break:break-all;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px;}
-.battle-link-box strong{color:var(--pink);font-size:18px;letter-spacing:4px;font-family:'Bebas Neue',sans-serif;}
+.battle-link-box{padding:16px;background:var(--bg2);border:1.5px solid var(--line);border-radius:14px;margin-bottom:12px;word-break:break-all;}
+.blb-code{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;color:var(--pink);display:block;text-align:center;margin-bottom:8px;}
+.blb-pw{font-size:13px;color:var(--text2);margin-bottom:8px;}
+.blb-link{font-size:11px;color:var(--text3);word-break:break-all;line-height:1.5;}
 
-/* ══════════ GAME ══════════ */
+/* ── JOIN ── */
+#joinScreen{align-items:center;justify-content:center;padding:48px 28px;}
+
+/* ── GAME ── */
 #gameScreen{background:var(--bg);}
 .g-header{padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);}
 .h-logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:5px;color:var(--black);line-height:1;}
@@ -121,8 +150,8 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .bb-left{display:flex;align-items:center;gap:8px;}
 .bb-badge{background:var(--gold);color:var(--black);font-size:10px;font-weight:700;letter-spacing:2px;padding:4px 10px;border-radius:20px;text-transform:uppercase;}
 .bb-room{font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:2px;}
-.bb-players{display:flex;gap:6px;}
-.bp-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);}
+.bb-players{display:flex;gap:5px;align-items:center;}
+.bp-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;}
 .bp-dot.in{background:var(--gold);}
 .bp-dot.done{background:var(--pink);}
 .g-body{flex:1;overflow-y:auto;padding:14px 16px 32px;max-width:480px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:12px;}
@@ -165,7 +194,7 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .c-lbl{font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);}
 .c-btn.is-active .c-lbl{color:var(--pink);}
 
-/* ══════════ MODALS ══════════ */
+/* ── MODALS ── */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.22s;}
 .overlay.open{opacity:1;pointer-events:all;}
 .modal{background:var(--bg);border-radius:24px;padding:32px 24px;width:100%;max-width:320px;text-align:center;transform:translateY(20px) scale(0.97);transition:transform 0.28s cubic-bezier(0.34,1.4,0.64,1);box-shadow:var(--shadow-lg);}
@@ -175,7 +204,7 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .m-body{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px;}
 .m-time{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:5px;color:var(--pink);margin:4px 0 8px;}
 .m-time.gold{color:var(--gold);}
-.star-reward{display:flex;align-items:center;justify-content:center;gap:6px;font-size:24px;margin:8px 0 16px;}
+.star-reward{display:flex;align-items:center;justify-content:center;gap:4px;font-size:24px;margin:8px 0 12px;}
 .m-btns{display:flex;flex-direction:column;gap:8px;}
 .m-btn{width:100%;padding:16px;border:none;border-radius:14px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.18s;}
 .m-btn:active{transform:scale(0.97);}
@@ -183,28 +212,47 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 .m-btn.light{background:var(--bg2);color:var(--text2);border:1.5px solid var(--line);}
 .m-btn.red{background:var(--pink);color:#fff;}
 .m-btn.gold-btn{background:var(--gold);color:var(--black);}
-
-/* battle notification */
-.battle-notif{background:var(--black);border-radius:20px;padding:28px 24px;max-width:300px;}
+.battle-notif-modal{background:var(--black);border-radius:20px;padding:28px 24px;max-width:300px;text-align:center;}
 .bn-icon{font-size:36px;margin-bottom:10px;}
 .bn-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:#fff;margin-bottom:6px;}
 .bn-body{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:20px;}
-
-/* Toast */
 .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--black);color:#fff;padding:11px 22px;border-radius:30px;font-size:12px;font-weight:600;letter-spacing:0.5px;z-index:400;pointer-events:none;transition:transform 0.3s cubic-bezier(0.34,1.4,0.64,1);white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
-
-/* Stars floating animation */
-@keyframes floatStar{0%{transform:translateY(0) scale(1);opacity:1;}100%{transform:translateY(-60px) scale(1.4);opacity:0;}}
+@keyframes floatStar{0%{transform:translateY(0) scale(1);opacity:1;}100%{transform:translateY(-70px) scale(1.5);opacity:0;}}
 .float-star{position:fixed;font-size:28px;pointer-events:none;z-index:500;animation:floatStar 1s ease-out forwards;}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════ INTRO ══════════════════ -->
+<!-- ══════════ FIREBASE SETUP OVERLAY ══════════ -->
+<div id="fbSetup">
+  <div class="fb-inner">
+    <div class="fb-logo">SUDOKU</div>
+    <span class="fb-tag">First-time Setup</span>
+    <div class="fb-title">Connect to Firebase</div>
+    <div class="fb-desc">This app needs Firebase to save accounts and battle rooms across any device. Setup takes 2 minutes and is completely free.</div>
+    <div class="fb-steps">
+      1. Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>
+      2. Create project → <b>Add app</b> → Web (&lt;/&gt;)<br>
+      3. Copy your <code>firebaseConfig</code> values below<br>
+      4. In Firebase console → <b>Build → Realtime Database → Create</b><br>
+      5. Set Rules to <code>{ "rules": { ".read": true, ".write": true } }</code>
+    </div>
+    <input class="fb-field" id="fbApiKey" placeholder="apiKey">
+    <input class="fb-field" id="fbProjectId" placeholder="projectId">
+    <input class="fb-field" id="fbDbUrl" placeholder="databaseURL  (ends with .firebaseio.com)">
+    <button class="fb-btn" onclick="submitFbConfig()">Connect & Save</button>
+    <div class="fb-err" id="fbErr"></div>
+    <div class="fb-saved-note">Config is saved in your browser — you only do this once per device.</div>
+  </div>
+</div>
+
+<!-- ══════════ INTRO ══════════ -->
 <div class="screen active" id="introScreen">
   <div class="intro-wrap" style="margin:auto">
-    <div class="brand" style="text-align:center;margin-bottom:48px">
+    <div class="brand">
       <div class="brand-logo">SUDOKU</div>
       <span class="brand-tag">Super Hard Only</span>
     </div>
@@ -212,171 +260,147 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
     <div style="margin-bottom:32px">
       <button class="card-btn" onclick="goAuth('solo')">
         <div class="card-icon dark" style="color:#fff">♟</div>
-        <div class="card-text"><h3>Solo</h3><p>Beat your own time & earn ⭐</p></div>
+        <div class="card-text"><h3>Solo</h3><p>Beat your own time &amp; earn ⭐</p></div>
       </button>
       <button class="card-btn" onclick="goAuth('battle')">
         <div class="card-icon pink" style="color:#fff">⚡</div>
-        <div class="card-text"><h3>Battle</h3><p>Race others & earn 🌟</p></div>
+        <div class="card-text"><h3>Battle</h3><p>Race others &amp; earn 🌟</p></div>
       </button>
     </div>
     <div class="hdivider"><span>already have a room?</span></div>
-    <button class="card-btn" onclick="goAuth('join')">
+    <button class="card-btn" onclick="goScreen('joinScreen')">
       <div class="card-icon">🔗</div>
       <div class="card-text"><h3>Join Battle Room</h3><p>Enter room code &amp; password</p></div>
     </button>
   </div>
 </div>
 
-<!-- ══════════════════ AUTH ══════════════════ -->
+<!-- ══════════ AUTH ══════════ -->
 <div class="screen" id="authScreen">
   <div class="auth-wrap" style="margin:auto">
     <button class="back-btn" onclick="goScreen('introScreen')">← Back</button>
     <div class="auth-title">SIGN IN</div>
-    <div class="auth-sub">Enter your nickname and 4-digit PIN</div>
+    <div class="auth-sub">Nickname + 4-digit PIN — works on any device</div>
     <div class="tab-row">
       <button class="tab on" id="tabLogin" onclick="setAuthTab('login')">Login</button>
       <button class="tab" id="tabRegister" onclick="setAuthTab('register')">New Account</button>
     </div>
     <div class="form-stack">
-      <input class="field" id="authNick" placeholder="Nickname" maxlength="16" oninput="this.value=this.value.toUpperCase()">
-      <input class="field pin" id="authPin" type="number" placeholder="• • • •" maxlength="4" oninput="limitPin(this)">
+      <input class="field" id="authNick" placeholder="Nickname" maxlength="16" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')">
+      <input class="field pin" id="authPin" type="tel" placeholder="• • • •" maxlength="4">
       <div class="err-msg" id="authErr"></div>
-      <button class="btn-fill pink" id="authSubmitBtn" onclick="submitAuth()">Enter</button>
+      <button class="btn-fill pink" id="authSubmitBtn" onclick="submitAuth()">Login</button>
       <button class="btn-fill ghost" onclick="authGuest()">Continue as Guest</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ PROFILE ══════════════════ -->
+<!-- ══════════ PROFILE ══════════ -->
 <div class="screen" id="profileScreen">
   <div class="profile-header">
-    <div class="profile-avatar" id="profAvatar">A</div>
+    <div class="profile-avatar" id="profAvatar">?</div>
     <div class="profile-name" id="profName">PLAYER</div>
     <div class="profile-stars">
-      <div class="star-pill">
-        <span class="s-icon">⭐</span>
-        <span class="s-count" id="profSoloStars">0</span>
-        <span class="s-label">Solo</span>
-      </div>
-      <div class="star-pill">
-        <span class="s-icon">🌟</span>
-        <span class="s-count" id="profBattleStars">0</span>
-        <span class="s-label">Battle</span>
-      </div>
+      <div class="star-pill"><span class="s-icon">⭐</span><span class="s-count" id="profSoloStars">0</span><span class="s-label">Solo</span></div>
+      <div class="star-pill"><span class="s-icon">🌟</span><span class="s-count" id="profBattleStars">0</span><span class="s-label">Battle</span></div>
     </div>
   </div>
   <div class="profile-body">
     <div class="stat-row">
-      <div class="stat-box">
-        <div class="stat-num" id="profCompleted">0</div>
-        <div class="stat-lbl">Completed</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-num" id="profBattleWins">0</div>
-        <div class="stat-lbl">Battle Wins</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-num" id="profBestTime">—</div>
-        <div class="stat-lbl">Best Time</div>
-      </div>
+      <div class="stat-box"><div class="stat-num" id="profCompleted">0</div><div class="stat-lbl">Completed</div></div>
+      <div class="stat-box"><div class="stat-num" id="profBattleWins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat-box"><div class="stat-num" id="profBestTime">—</div><div class="stat-lbl">Best</div></div>
     </div>
-
     <div>
       <div class="profile-section-title">Saved Games</div>
-      <div id="savedGamesList"><div class="no-saves">No saved games yet</div></div>
+      <div id="savedGamesList"><div class="loading-text">Loading...</div></div>
     </div>
-
-    <button class="btn-fill dark" onclick="startFromProfile()">Play Now</button>
+    <button class="btn-fill dark" onclick="G.mode=pendingMode||'solo';enterGame()">Play Now</button>
     <button class="btn-fill ghost" onclick="logoutUser()">Log Out</button>
   </div>
 </div>
 
-<!-- ══════════════════ BATTLE SETUP ══════════════════ -->
+<!-- ══════════ BATTLE SETUP ══════════ -->
 <div class="screen" id="battleSetupScreen">
   <div class="bs-wrap" style="margin:auto">
     <button class="back-btn" onclick="goScreen('introScreen')">← Back</button>
-    <div class="step-indicator" id="bsSteps">
-      <div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div>
+    <div class="step-indicator">
+      <div class="step-dot active" id="sd1"></div>
+      <div class="step-dot" id="sd2"></div>
+      <div class="step-dot" id="sd3"></div>
     </div>
-
-    <!-- Step 1: player count -->
     <div id="bsStep1">
       <div class="bs-title">BATTLE</div>
       <div class="bs-sub">How many players?</div>
       <div class="player-count-grid">
-        <button class="pc-btn" onclick="selectPlayerCount(2)">2<span>players</span></button>
-        <button class="pc-btn" onclick="selectPlayerCount(3)">3<span>players</span></button>
-        <button class="pc-btn" onclick="selectPlayerCount(4)">4<span>players</span></button>
-        <button class="pc-btn" onclick="selectPlayerCount(5)">5<span>players</span></button>
-        <button class="pc-btn" onclick="selectPlayerCount(6)">6<span>players</span></button>
-        <button class="pc-btn" onclick="selectPlayerCount(10)">10<span>players</span></button>
+        <button class="pc-btn" onclick="selectPC(2,this)">2<span>players</span></button>
+        <button class="pc-btn" onclick="selectPC(3,this)">3<span>players</span></button>
+        <button class="pc-btn" onclick="selectPC(4,this)">4<span>players</span></button>
+        <button class="pc-btn" onclick="selectPC(5,this)">5<span>players</span></button>
+        <button class="pc-btn" onclick="selectPC(6,this)">6<span>players</span></button>
+        <button class="pc-btn" onclick="selectPC(10,this)">10<span>players</span></button>
       </div>
     </div>
-
-    <!-- Step 2: set password -->
     <div id="bsStep2" style="display:none">
       <div class="bs-title">PASSWORD</div>
-      <div class="bs-sub">Set a room password for your battle</div>
+      <div class="bs-sub">Set a password for your room</div>
       <div class="form-stack">
-        <input class="field" id="bsRoomPw" placeholder="Room password" maxlength="12">
+        <input class="field" id="bsRoomPw" placeholder="Room password (share with friends)" maxlength="12">
         <div class="err-msg" id="bsErr"></div>
-        <button class="btn-fill pink" onclick="bsStep2Next()">Continue</button>
-        <button class="btn-fill ghost" onclick="bsBack(1)">← Back</button>
+        <button class="btn-fill pink" id="bsNextBtn" onclick="bsCreateRoom()">Create Room</button>
+        <button class="btn-fill ghost" onclick="bsShowStep(1)">← Back</button>
       </div>
     </div>
-
-    <!-- Step 3: share link -->
     <div id="bsStep3" style="display:none">
       <div class="bs-title">SHARE</div>
       <div class="bs-sub">Send this to your opponents</div>
-      <div class="battle-link-box" id="bsLinkBox">Generating...</div>
+      <div class="battle-link-box">
+        <span class="blb-code" id="blbCode">——</span>
+        <div class="blb-pw">Password: <b id="blbPw">—</b></div>
+        <div class="blb-link" id="blbLink">—</div>
+      </div>
       <div class="form-stack">
-        <button class="btn-fill pink" onclick="copyBattleLink()">📋 Copy Link</button>
-        <button class="btn-fill dark" onclick="startBattleHost()">Start Game Now</button>
-        <button class="btn-fill ghost" onclick="bsBack(2)">← Back</button>
+        <button class="btn-fill pink" onclick="copyBattleLink()">📋 Copy Link + Code</button>
+        <button class="btn-fill dark" onclick="startBattleAsHost()">Start My Game</button>
+        <button class="btn-fill ghost" onclick="bsShowStep(2)">← Back</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ JOIN BATTLE ══════════════════ -->
+<!-- ══════════ JOIN ══════════ -->
 <div class="screen" id="joinScreen">
   <div class="auth-wrap" style="margin:auto">
     <button class="back-btn" onclick="goScreen('introScreen')">← Back</button>
     <div class="auth-title">JOIN BATTLE</div>
-    <div class="auth-sub">Enter the room code and password</div>
+    <div class="auth-sub">Enter room code and password</div>
     <div class="form-stack">
       <input class="field" id="joinCode" placeholder="Room Code (6 chars)" maxlength="6" oninput="this.value=this.value.toUpperCase()">
       <input class="field" id="joinPw" placeholder="Room Password">
       <div class="err-msg" id="joinErr"></div>
-      <button class="btn-fill pink" onclick="submitJoin()">Join Battle</button>
+      <button class="btn-fill pink" id="joinBtn" onclick="submitJoin()">Join Battle</button>
+      <button class="btn-fill ghost" onclick="authGuest();pendingMode='join'">Join as Guest</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ GAME ══════════════════ -->
+<!-- ══════════ GAME ══════════ -->
 <div class="screen" id="gameScreen">
   <div class="g-header">
-    <div>
-      <div class="h-logo">SUDOKU</div>
-      <div class="h-user" id="hUser">Guest</div>
-    </div>
+    <div><div class="h-logo">SUDOKU</div><div class="h-user" id="hUser">Guest</div></div>
     <div class="h-right">
       <span class="seed-tag" id="seedTag">#00000</span>
       <button class="ico-btn" onclick="saveAndGoProfile()">👤</button>
-      <button class="ico-btn" onclick="goScreen('introScreen')">⌂</button>
+      <button class="ico-btn" onclick="stopTimer();goScreen('introScreen')">⌂</button>
     </div>
   </div>
-
-  <!-- Battle banner (hidden in solo) -->
   <div class="battle-banner" id="battleBanner" style="display:none">
     <div class="bb-left">
       <span class="bb-badge">⚡ BATTLE</span>
-      <span class="bb-room" id="bbRoomCode">—</span>
+      <span class="bb-room" id="bbRoom">—</span>
     </div>
     <div class="bb-players" id="bbPlayers"></div>
   </div>
-
   <div class="g-body">
     <div class="timer-block">
       <div class="timer-num" id="timerNum">00:00</div>
@@ -393,8 +417,7 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
       <button class="c-btn" id="noteBtn" onclick="toggleNote()"><span class="c-icon">✏️</span><span class="c-lbl">Note</span></button>
       <button class="c-btn" onclick="doErase()"><span class="c-icon">⌫</span><span class="c-lbl">Erase</span></button>
       <button class="c-btn" id="pauseBtn" onclick="doToggleTimer()">
-        <span class="c-icon" id="pauseIcon">⏸</span>
-        <span class="c-lbl" id="pauseLbl">Pause</span>
+        <span class="c-icon" id="pauseIcon">⏸</span><span class="c-lbl" id="pauseLbl">Pause</span>
       </button>
       <button class="c-btn" onclick="askNewGame()"><span class="c-icon">⟳</span><span class="c-lbl">New</span></button>
     </div>
@@ -404,9 +427,8 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
 <!-- MODALS -->
 <div class="overlay" id="confirmModal">
   <div class="modal">
-    <div class="m-icon">⟳</div>
-    <div class="m-title">NEW GAME?</div>
-    <div class="m-body">Progress will be saved so you can resume later.</div>
+    <div class="m-icon">⟳</div><div class="m-title">NEW GAME?</div>
+    <div class="m-body">Current progress will be saved so you can resume anytime.</div>
     <div class="m-btns">
       <button class="m-btn red" onclick="closeModal('confirmModal');doNewGame()">Yes, New Game</button>
       <button class="m-btn light" onclick="closeModal('confirmModal');if(!G.done)resumeTimer()">Cancel</button>
@@ -428,22 +450,12 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
   </div>
 </div>
 
-<div class="overlay" id="battleNotifModal">
-  <div class="battle-notif" style="text-align:center">
-    <div class="bn-icon">🏁</div>
-    <div class="bn-title" id="bnTitle">FINISHED!</div>
-    <div class="bn-body" id="bnBody">Someone completed the puzzle!</div>
-    <button class="m-btn dark" onclick="closeModal('battleNotifModal')" style="margin-top:4px">Keep Playing</button>
-  </div>
-</div>
-
 <div class="overlay" id="battleWinModal">
   <div class="modal">
-    <div class="m-icon">🏆</div>
-    <div class="m-title">YOU WIN!</div>
+    <div class="m-icon">🏆</div><div class="m-title">YOU WIN!</div>
     <div class="m-time gold" id="bWinTime">00:00</div>
     <div class="star-reward" id="bWinStars"></div>
-    <div class="m-body">You solved it first! Battle stars earned.</div>
+    <div class="m-body">First to finish! Battle star earned.</div>
     <div class="m-btns">
       <button class="m-btn gold-btn" onclick="closeModal('battleWinModal');askNewGame()">Play Again</button>
       <button class="m-btn light" onclick="closeModal('battleWinModal')">View Board</button>
@@ -451,123 +463,200 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-
   </div>
 </div>
 
+<div class="overlay" id="battleNotifModal">
+  <div class="battle-notif-modal">
+    <div class="bn-icon">🏁</div>
+    <div class="bn-title" id="bnTitle">FINISHED!</div>
+    <div class="bn-body" id="bnBody">Someone completed the puzzle!</div>
+    <button class="m-btn dark" onclick="closeModal('battleNotifModal')" style="margin-top:4px">Keep Playing</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-/* ══════════════════════════════════════════
-   SUDOKU ENGINE
-══════════════════════════════════════════ */
-function mkRng(s){
-  return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+/* ══════════════════════════════════════════════════
+   FIREBASE INIT
+══════════════════════════════════════════════════ */
+let DB = null;
+
+function loadFbConfig(){
+  try{ return JSON.parse(localStorage.getItem('fbCfg')||'null'); }catch(e){return null;}
 }
-function shuffle(a,rng){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function isValid(b,pos,n){
-  const r=Math.floor(pos/9),c=pos%9;
-  for(let i=0;i<9;i++){if(b[r*9+i]===n||b[i*9+c]===n)return false;}
-  const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
-  for(let i=0;i<3;i++)for(let j=0;j<3;j++)if(b[(br+i)*9+(bc+j)]===n)return false;
+
+function initFirebase(cfg){
+  try{
+    if(!firebase.apps.length){
+      firebase.initializeApp({
+        apiKey: cfg.apiKey,
+        projectId: cfg.projectId,
+        databaseURL: cfg.databaseURL,
+      });
+    }
+    DB = firebase.database();
+    return true;
+  }catch(e){
+    console.error('Firebase init error',e);
+    return false;
+  }
+}
+
+function submitFbConfig(){
+  const apiKey  = document.getElementById('fbApiKey').value.trim();
+  const projId  = document.getElementById('fbProjectId').value.trim();
+  const dbUrl   = document.getElementById('fbDbUrl').value.trim();
+  const err     = document.getElementById('fbErr');
+  if(!apiKey||!projId||!dbUrl){err.textContent='Fill in all three fields';return;}
+  if(!dbUrl.includes('firebaseio.com')){err.textContent='databaseURL should end with .firebaseio.com';return;}
+  const cfg={apiKey,projectId:projId,databaseURL:dbUrl};
+  if(!initFirebase(cfg)){err.textContent='Failed to connect — check your values';return;}
+  localStorage.setItem('fbCfg',JSON.stringify(cfg));
+  document.getElementById('fbSetup').classList.add('hidden');
+  showToast('Firebase connected ✓');
+}
+
+/* Try saved config on load */
+(function(){
+  const cfg=loadFbConfig();
+  if(cfg&&initFirebase(cfg)){
+    document.getElementById('fbSetup').classList.add('hidden');
+  }
+  // Check URL params for direct join link
+  const p=new URLSearchParams(location.search);
+  const rc=p.get('room'),rp=p.get('pw');
+  if(rc&&rp){
+    document.getElementById('joinCode').value=rc;
+    document.getElementById('joinPw').value=rp;
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('joinScreen').classList.add('active');
+  }
+})();
+
+/* ══════════════════════════════════════════════════
+   DB HELPERS
+══════════════════════════════════════════════════ */
+function dbRef(path){ return DB.ref(path); }
+
+async function dbGet(path){
+  const snap = await dbRef(path).get();
+  return snap.exists() ? snap.val() : null;
+}
+async function dbSet(path, val){ await dbRef(path).set(val); }
+async function dbUpdate(path, val){ await dbRef(path).update(val); }
+
+/* ══════════════════════════════════════════════════
+   USER API  (Firebase path: users/{NICK})
+══════════════════════════════════════════════════ */
+async function getUser(nick){ return dbGet('users/'+nick); }
+
+async function createUser(nick, pin){
+  const existing = await getUser(nick);
+  if(existing) return false;
+  await dbSet('users/'+nick, {
+    pin, soloStars:0, battleStars:0,
+    completed:0, battleWins:0, bestTime:0, saves:{}
+  });
   return true;
 }
-function fillBoard(b,pos,rng){
-  if(pos===81)return true;if(b[pos]!==0)return fillBoard(b,pos+1,rng);
-  for(const n of shuffle([1,2,3,4,5,6,7,8,9],rng)){if(isValid(b,pos,n)){b[pos]=n;if(fillBoard(b,pos+1,rng))return true;b[pos]=0;}}
-  return false;
-}
-function countSols(b,lim=2){
-  let c=0;
-  const go=(b,p)=>{if(c>=lim)return;if(p===81){c++;return;}if(b[p]!==0){go(b,p+1);return;}for(let n=1;n<=9;n++){if(isValid(b,p,n)){b[p]=n;go(b,p+1);b[p]=0;if(c>=lim)return;}}};
-  go([...b],0);return c;
-}
-function makePuzzle(seed,givens=23){
-  const rng=mkRng(seed);const sol=Array(81).fill(0);fillBoard(sol,0,rng);
-  const puz=[...sol];const positions=shuffle([...Array(81).keys()],rng);let removed=0;
-  for(const p of positions){if(removed>=81-givens)break;const v=puz[p];puz[p]=0;if(countSols(puz)!==1)puz[p]=v;else removed++;}
-  return{puzzle:puz,solution:sol};
+
+async function verifyUser(nick, pin){
+  const u = await getUser(nick);
+  return u && u.pin === pin;
 }
 
-/* ══════════════════════════════════════════
-   DATA / AUTH (localStorage)
-══════════════════════════════════════════ */
-function loadDB(){return JSON.parse(localStorage.getItem('sudokuDB')||'{}');}
-function saveDB(db){localStorage.setItem('sudokuDB',JSON.stringify(db));}
-
-function getUser(nick){const db=loadDB();return db[nick]||null;}
-function createUser(nick,pin){
-  const db=loadDB();
-  if(db[nick])return false;
-  db[nick]={pin,soloStars:0,battleStars:0,completed:0,battleWins:0,bestTime:null,saves:[]};
-  saveDB(db);return true;
-}
-function verifyUser(nick,pin){const u=getUser(nick);return u&&u.pin===pin;}
-function updateUser(nick,fn){const db=loadDB();if(db[nick])fn(db[nick]);saveDB(db);}
-
-function addSoloStar(nick){updateUser(nick,u=>{u.soloStars=(u.soloStars||0)+1;u.completed=(u.completed||0)+1;});}
-function addBattleStar(nick){updateUser(nick,u=>{u.battleStars=(u.battleStars||0)+1;u.battleWins=(u.battleWins||0)+1;});}
-function updateBestTime(nick,t){updateUser(nick,u=>{if(!u.bestTime||t<u.bestTime)u.bestTime=t;});}
-
-function saveGame(nick,saveData){
-  updateUser(nick,u=>{
-    if(!u.saves)u.saves=[];
-    const idx=u.saves.findIndex(s=>s.seed===saveData.seed);
-    if(idx>=0)u.saves[idx]=saveData;else u.saves.unshift(saveData);
-    if(u.saves.length>5)u.saves=u.saves.slice(0,5);
+async function addSoloStar(nick){
+  const u=await getUser(nick); if(!u)return;
+  await dbUpdate('users/'+nick,{
+    soloStars:(u.soloStars||0)+1,
+    completed:(u.completed||0)+1,
   });
 }
-function removeSave(nick,seed){updateUser(nick,u=>{if(u.saves)u.saves=u.saves.filter(s=>s.seed!==seed);});}
 
-/* ══════════════════════════════════════════
-   BATTLE ROOMS (localStorage sim)
-══════════════════════════════════════════ */
-function getBattleRooms(){return JSON.parse(localStorage.getItem('battleRooms')||'{}');}
-function saveBattleRooms(r){localStorage.setItem('battleRooms',JSON.stringify(r));}
-function createBattleRoom(code,pw,maxPlayers,seed,hostNick){
-  const rooms=getBattleRooms();
-  rooms[code]={pw,maxPlayers,seed,host:hostNick,players:[],finishers:[],created:Date.now()};
-  saveBattleRooms(rooms);
+async function addBattleStar(nick){
+  const u=await getUser(nick); if(!u)return;
+  await dbUpdate('users/'+nick,{
+    battleStars:(u.battleStars||0)+1,
+    battleWins:(u.battleWins||0)+1,
+  });
 }
-function getBattleRoom(code){return getBattleRooms()[code]||null;}
-function joinBattleRoom(code,nick){
-  const rooms=getBattleRooms();
-  if(!rooms[code])return false;
-  if(!rooms[code].players.includes(nick))rooms[code].players.push(nick);
-  saveBattleRooms(rooms);return true;
-}
-function recordBattleFinish(code,nick,time){
-  const rooms=getBattleRooms();
-  if(!rooms[code])return 0;
-  const already=rooms[code].finishers.find(f=>f.nick===nick);
-  if(!already)rooms[code].finishers.push({nick,time});
-  saveBattleRooms(rooms);
-  return rooms[code].finishers.length;
-}
-function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('');}
 
-/* ══════════════════════════════════════════
-   STATE
-══════════════════════════════════════════ */
+async function updateBestTime(nick, t){
+  const u=await getUser(nick); if(!u)return;
+  if(!u.bestTime||t<u.bestTime) await dbUpdate('users/'+nick,{bestTime:t});
+}
+
+async function saveGame(nick, data){
+  await dbSet('users/'+nick+'/saves/'+data.seed, data);
+}
+async function removeSave(nick, seed){
+  await dbRef('users/'+nick+'/saves/'+seed).remove();
+}
+
+/* ══════════════════════════════════════════════════
+   BATTLE ROOM API  (Firebase path: rooms/{CODE})
+══════════════════════════════════════════════════ */
+async function createRoom(code, pw, maxPlayers, seed, hostNick){
+  await dbSet('rooms/'+code, {
+    pw, maxPlayers, seed, host: hostNick,
+    players: {[hostNick]: {joinedAt: Date.now(), done:false}},
+    finishers: {},
+    createdAt: Date.now(),
+  });
+}
+
+async function getRoom(code){ return dbGet('rooms/'+code); }
+
+async function joinRoom(code, nick){
+  await dbUpdate('rooms/'+code+'/players/'+nick, {joinedAt:Date.now(), done:false});
+}
+
+async function recordFinish(code, nick, time){
+  await dbUpdate('rooms/'+code+'/finishers/'+nick, {time, finishedAt:Date.now()});
+  await dbUpdate('rooms/'+code+'/players/'+nick, {done:true});
+}
+
+function listenRoom(code, cb){
+  const ref = dbRef('rooms/'+code);
+  ref.on('value', snap=>{ cb(snap.exists()?snap.val():null); });
+  return ()=>ref.off('value');
+}
+
+/* ══════════════════════════════════════════════════
+   SUDOKU ENGINE
+══════════════════════════════════════════════════ */
+function mkRng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(a,rng){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function isValid(b,pos,n){const r=Math.floor(pos/9),c=pos%9;for(let i=0;i<9;i++){if(b[r*9+i]===n||b[i*9+c]===n)return false;}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=0;i<3;i++)for(let j=0;j<3;j++)if(b[(br+i)*9+(bc+j)]===n)return false;return true;}
+function fillBoard(b,pos,rng){if(pos===81)return true;if(b[pos]!==0)return fillBoard(b,pos+1,rng);for(const n of shuffle([1,2,3,4,5,6,7,8,9],rng)){if(isValid(b,pos,n)){b[pos]=n;if(fillBoard(b,pos+1,rng))return true;b[pos]=0;}}return false;}
+function countSols(b,lim=2){let c=0;const go=(b,p)=>{if(c>=lim)return;if(p===81){c++;return;}if(b[p]!==0){go(b,p+1);return;}for(let n=1;n<=9;n++){if(isValid(b,p,n)){b[p]=n;go(b,p+1);b[p]=0;if(c>=lim)return;}}};go([...b],0);return c;}
+function makePuzzle(seed,givens=23){const rng=mkRng(seed);const sol=Array(81).fill(0);fillBoard(sol,0,rng);const puz=[...sol];const pos=shuffle([...Array(81).keys()],rng);let rem=0;for(const p of pos){if(rem>=81-givens)break;const v=puz[p];puz[p]=0;if(countSols(puz)!==1)puz[p]=v;else rem++;}return{puzzle:puz,solution:sol};}
+
+/* ══════════════════════════════════════════════════
+   APP STATE
+══════════════════════════════════════════════════ */
 const G={
-  mode:'solo',nick:'',isGuest:false,
+  mode:'solo', nick:'', isGuest:false,
   puzzle:[],solution:[],board:[],notes:[],given:[],
-  selected:-1,noteMode:false,mistakes:0,maxMistakes:3,
-  history:[],seed:0,timer:0,running:false,_ti:null,done:false,
-  battleCode:null,battlePw:null,battleMaxPlayers:2,
-  _pollInterval:null,
+  selected:-1, noteMode:false, mistakes:0, maxMistakes:3,
+  history:[], seed:0, timer:0, running:false, _ti:null, done:false,
+  battleCode:null, battlePw:null, battleMaxPlayers:2,
+  _roomUnsub:null,
+  _seenFinishers:{},
 };
-
-/* ══════════════════════════════════════════
-   NAVIGATION
-══════════════════════════════════════════ */
 let pendingMode='solo';
+
+/* ══════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════ */
 function goScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id!=='gameScreen'){stopTimer();clearBattlePoll();}
+  if(id!=='gameScreen'){stopTimer();unlistenRoom();}
 }
 
 function goAuth(mode){
   pendingMode=mode;
   if(mode==='battle'){goScreen('battleSetupScreen');bsReset();return;}
-  if(mode==='join'){goScreen('joinScreen');return;}
   goScreen('authScreen');
   document.getElementById('authErr').textContent='';
 }
@@ -576,182 +665,234 @@ function setAuthTab(t){
   document.getElementById('tabLogin').classList.toggle('on',t==='login');
   document.getElementById('tabRegister').classList.toggle('on',t==='register');
   document.getElementById('authSubmitBtn').textContent=t==='login'?'Login':'Create Account';
-  window._authMode=t;
+  window._authTab=t;
 }
-window._authMode='login';
+window._authTab='login';
 
-function limitPin(el){if(el.value.length>4)el.value=el.value.slice(0,4);}
-
-function submitAuth(){
+async function submitAuth(){
+  if(!DB){showToast('Connect Firebase first');return;}
   const nick=document.getElementById('authNick').value.trim().toUpperCase();
   const pin=document.getElementById('authPin').value.trim();
   const err=document.getElementById('authErr');
-  if(!nick||nick.length<2){err.textContent='Nickname must be at least 2 characters';return;}
-  if(!/^\d{4}$/.test(pin)){err.textContent='PIN must be exactly 4 digits';return;}
-
-  if(window._authMode==='register'){
-    const ok=createUser(nick,pin);
-    if(!ok){err.textContent='Nickname already taken — try Login instead';return;}
-    err.textContent='';G.nick=nick;G.isGuest=false;enterAfterAuth();
-  } else {
-    if(!verifyUser(nick,pin)){err.textContent='Wrong nickname or PIN';return;}
-    err.textContent='';G.nick=nick;G.isGuest=false;enterAfterAuth();
+  if(!nick||nick.length<2){err.textContent='Nickname: min 2 characters';return;}
+  if(!/^\d{4}$/.test(pin)){err.textContent='PIN: exactly 4 digits';return;}
+  const btn=document.getElementById('authSubmitBtn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  try{
+    if(window._authTab==='register'){
+      const ok=await createUser(nick,pin);
+      if(!ok){err.textContent='Nickname taken — try Login';btn.textContent='Create Account';btn.disabled=false;return;}
+    }else{
+      const ok=await verifyUser(nick,pin);
+      if(!ok){err.textContent='Wrong nickname or PIN';btn.textContent='Login';btn.disabled=false;return;}
+    }
+    err.textContent='';G.nick=nick;G.isGuest=false;
+    btn.textContent=window._authTab==='login'?'Login':'Create Account';btn.disabled=false;
+    await showProfile();
+  }catch(e){
+    err.textContent='Connection error — check Firebase setup';
+    btn.textContent=window._authTab==='login'?'Login':'Create Account';btn.disabled=false;
   }
 }
 
-function authGuest(){G.nick='GUEST_'+Math.floor(Math.random()*9999);G.isGuest=true;enterAfterAuth();}
-
-function enterAfterAuth(){
-  if(G.isGuest){G.mode=pendingMode;enterGame();return;}
-  showProfile();
+function authGuest(){
+  G.nick='GUEST_'+Math.floor(Math.random()*9999);
+  G.isGuest=true;
+  G.mode=pendingMode;
+  enterGame();
 }
 
 function logoutUser(){G.nick='';G.isGuest=false;goScreen('introScreen');}
 
-function startFromProfile(){G.mode=pendingMode||'solo';enterGame();}
-
-/* ══════════════════════════════════════════
-   PROFILE SCREEN
-══════════════════════════════════════════ */
-function showProfile(){
+/* ══════════════════════════════════════════════════
+   PROFILE
+══════════════════════════════════════════════════ */
+async function showProfile(){
   goScreen('profileScreen');
-  const u=getUser(G.nick)||{soloStars:0,battleStars:0,completed:0,battleWins:0,bestTime:null,saves:[]};
   document.getElementById('profAvatar').textContent=G.nick[0];
   document.getElementById('profName').textContent=G.nick;
-  document.getElementById('profSoloStars').textContent=u.soloStars||0;
-  document.getElementById('profBattleStars').textContent=u.battleStars||0;
-  document.getElementById('profCompleted').textContent=u.completed||0;
-  document.getElementById('profBattleWins').textContent=u.battleWins||0;
-  document.getElementById('profBestTime').textContent=u.bestTime?fmt(u.bestTime):'—';
-  renderSavedGames(u.saves||[]);
+  document.getElementById('savedGamesList').innerHTML='<div class="loading-text">Loading...</div>';
+  try{
+    const u=await getUser(G.nick)||{};
+    document.getElementById('profSoloStars').textContent=u.soloStars||0;
+    document.getElementById('profBattleStars').textContent=u.battleStars||0;
+    document.getElementById('profCompleted').textContent=u.completed||0;
+    document.getElementById('profBattleWins').textContent=u.battleWins||0;
+    document.getElementById('profBestTime').textContent=u.bestTime?fmt(u.bestTime):'—';
+    const saves=u.saves?Object.values(u.saves).sort((a,b)=>b.savedAt-a.savedAt):[];
+    renderSavedGames(saves);
+  }catch(e){document.getElementById('savedGamesList').innerHTML='<div class="no-saves">Failed to load</div>';}
 }
 
 function renderSavedGames(saves){
   const el=document.getElementById('savedGamesList');
   if(!saves.length){el.innerHTML='<div class="no-saves">No saved games yet</div>';return;}
   el.innerHTML=saves.map(s=>`
-    <div class="saved-card" onclick="resumeGame(${s.seed})">
+    <div class="saved-card">
       <span class="saved-icon">🧩</span>
       <div class="saved-info">
         <h4>Puzzle #${String(s.seed).padStart(5,'0')}</h4>
-        <p>${s.filledCount||0} / ${s.totalEmpty||81} cells done</p>
+        <p>${s.filledCount||0} / ${s.totalEmpty||0} cells filled</p>
       </div>
       <span class="saved-time">${fmt(s.timer||0)}</span>
-      <button class="resume-btn" onclick="event.stopPropagation();resumeGame(${s.seed})">Resume</button>
+      <button class="resume-btn" onclick="resumeSave(${s.seed})">Resume</button>
     </div>
   `).join('');
 }
 
-function resumeGame(seed){
-  const u=getUser(G.nick);
-  const save=u&&u.saves&&u.saves.find(s=>s.seed===seed);
-  if(!save){showToast('Save not found');return;}
-  G.mode='solo';
-  enterGame(save);
+async function resumeSave(seed){
+  try{
+    const u=await getUser(G.nick);
+    const save=u&&u.saves&&u.saves[seed];
+    if(!save){showToast('Save not found');return;}
+    G.mode='solo';
+    enterGame(save);
+  }catch(e){showToast('Failed to load save');}
 }
 
-/* ══════════════════════════════════════════
-   BATTLE SETUP FLOW
-══════════════════════════════════════════ */
-let bsPlayerCount=2,bsCode='',bsSeed=0;
-function bsReset(){
-  bsPlayerCount=2;bsCode='';bsSeed=0;
-  bsShowStep(1);
-  document.querySelectorAll('.pc-btn').forEach(b=>b.classList.remove('selected'));
-  document.getElementById('bsRoomPw').value='';
-  document.getElementById('bsErr').textContent='';
-}
+/* ══════════════════════════════════════════════════
+   BATTLE SETUP
+══════════════════════════════════════════════════ */
+let bsPC=2, bsCode='', bsSeed=0, bsPw='';
+function bsReset(){bsPC=2;bsCode='';bsSeed=0;bsPw='';bsShowStep(1);document.querySelectorAll('.pc-btn').forEach(b=>b.classList.remove('selected'));document.getElementById('bsRoomPw').value='';document.getElementById('bsErr').textContent='';}
 function bsShowStep(n){
   [1,2,3].forEach(i=>document.getElementById('bsStep'+i).style.display=i===n?'block':'none');
-  document.querySelectorAll('.step-dot').forEach((d,i)=>d.classList.toggle('active',i<n));
+  ['sd1','sd2','sd3'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i<n));
 }
-function bsBack(toStep){bsShowStep(toStep);}
-function selectPlayerCount(n){
-  bsPlayerCount=n;
-  document.querySelectorAll('.pc-btn').forEach(b=>b.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
-  setTimeout(()=>bsShowStep(2),180);
+function selectPC(n,el){bsPC=n;document.querySelectorAll('.pc-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');setTimeout(()=>bsShowStep(2),180);}
+
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('');}
+
+async function bsCreateRoom(){
+  if(!DB){showToast('Firebase not connected');return;}
+  bsPw=document.getElementById('bsRoomPw').value.trim();
+  if(!bsPw){document.getElementById('bsErr').textContent='Please set a password';return;}
+  const btn=document.getElementById('bsNextBtn');
+  btn.innerHTML='<span class="spinner"></span> Creating...';btn.disabled=true;
+  try{
+    bsCode=genCode();
+    bsSeed=Date.now()%99999+1;
+    const nick=G.nick||'HOST';
+    await createRoom(bsCode,bsPw,bsPC,bsSeed,nick);
+    const link=location.origin+location.pathname+'?room='+bsCode+'&pw='+encodeURIComponent(bsPw);
+    document.getElementById('blbCode').textContent=bsCode;
+    document.getElementById('blbPw').textContent=bsPw;
+    document.getElementById('blbLink').textContent=link;
+    btn.textContent='Create Room';btn.disabled=false;
+    bsShowStep(3);
+  }catch(e){
+    document.getElementById('bsErr').textContent='Failed to create room — check Firebase';
+    btn.textContent='Create Room';btn.disabled=false;
+  }
 }
-function bsStep2Next(){
-  const pw=document.getElementById('bsRoomPw').value.trim();
-  if(!pw){document.getElementById('bsErr').textContent='Please set a password';return;}
-  bsCode=genCode();
-  bsSeed=Date.now()%99999+1;
-  const nick=G.nick||'HOST';
-  createBattleRoom(bsCode,pw,bsPlayerCount,bsSeed,nick);
-  joinBattleRoom(bsCode,nick);
-  const link=window.location.href.split('?')[0]+'?room='+bsCode+'&pw='+encodeURIComponent(pw);
-  document.getElementById('bsLinkBox').innerHTML=
-    `<div style="margin-bottom:8px">Room Code: <strong>${bsCode}</strong></div>`+
-    `Password: <strong style="font-size:14px;letter-spacing:1px;color:var(--text)">${pw}</strong><br><br>`+
-    `<span style="font-size:11px;color:var(--text3);word-break:break-all">${link}</span>`;
-  bsShowStep(3);
-}
+
 function copyBattleLink(){
-  const pw=document.getElementById('bsRoomPw').value.trim();
-  const link=window.location.href.split('?')[0]+'?room='+bsCode+'&pw='+encodeURIComponent(pw);
-  const text=`⚡ Sudoku Battle!\nCode: ${bsCode} | Password: ${pw}\nJoin: ${link}`;
+  const link=location.origin+location.pathname+'?room='+bsCode+'&pw='+encodeURIComponent(bsPw);
+  const text=`⚡ Sudoku Battle!\nCode: ${bsCode}\nPassword: ${bsPw}\nJoin: ${link}`;
   navigator.clipboard?.writeText(text).catch(()=>{});
-  showToast('Link copied! Share with opponents 🎯');
+  showToast('Copied! Share with opponents 🎯');
 }
-function startBattleHost(){
-  G.mode='battle';G.battleCode=bsCode;G.battlePw=document.getElementById('bsRoomPw').value.trim();
-  G.battleMaxPlayers=bsPlayerCount;
+
+function startBattleAsHost(){
+  G.mode='battle';G.battleCode=bsCode;G.battlePw=bsPw;G.battleMaxPlayers=bsPC;
   enterGame(null,bsSeed);
 }
 
-/* ══════════════════════════════════════════
+/* ══════════════════════════════════════════════════
    JOIN BATTLE
-══════════════════════════════════════════ */
-function submitJoin(){
+══════════════════════════════════════════════════ */
+async function submitJoin(){
+  if(!DB){showToast('Firebase not connected');return;}
   const code=document.getElementById('joinCode').value.trim().toUpperCase();
   const pw=document.getElementById('joinPw').value.trim();
   const err=document.getElementById('joinErr');
   if(code.length!==6){err.textContent='Room code must be 6 characters';return;}
-  if(!pw){err.textContent='Enter the room password';return;}
-  const room=getBattleRoom(code);
-  if(!room){err.textContent='Room not found';return;}
-  if(room.pw!==pw){err.textContent='Wrong password';return;}
-  const nick=G.nick||('GUEST_'+Math.floor(Math.random()*999));
-  joinBattleRoom(code,nick);
-  G.mode='battle';G.battleCode=code;G.battlePw=pw;G.battleMaxPlayers=room.maxPlayers;
-  err.textContent='';
-  enterGame(null,room.seed);
+  if(!pw){err.textContent='Enter the password';return;}
+  const btn=document.getElementById('joinBtn');
+  btn.innerHTML='<span class="spinner"></span> Joining...';btn.disabled=true;
+  try{
+    const room=await getRoom(code);
+    if(!room){err.textContent='Room not found';btn.textContent='Join Battle';btn.disabled=false;return;}
+    if(room.pw!==pw){err.textContent='Wrong password';btn.textContent='Join Battle';btn.disabled=false;return;}
+    const nick=G.nick||('GUEST_'+Math.floor(Math.random()*999));
+    await joinRoom(code,nick);
+    G.mode='battle';G.battleCode=code;G.battlePw=pw;G.battleMaxPlayers=room.maxPlayers;
+    err.textContent='';btn.textContent='Join Battle';btn.disabled=false;
+    enterGame(null,room.seed);
+  }catch(e){
+    err.textContent='Connection error — check Firebase';
+    btn.textContent='Join Battle';btn.disabled=false;
+  }
 }
 
-/* handle URL params */
-(function(){
-  const p=new URLSearchParams(location.search);
-  const code=p.get('room'),pw=p.get('pw');
-  if(code&&pw){
-    document.getElementById('joinCode').value=code;
-    document.getElementById('joinPw').value=pw;
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById('joinScreen').classList.add('active');
-  }
-})();
-
-/* ══════════════════════════════════════════
+/* ══════════════════════════════════════════════════
    ENTER GAME
-══════════════════════════════════════════ */
-function enterGame(saveData,forceSeed){
+══════════════════════════════════════════════════ */
+function enterGame(saveData, forceSeed){
   document.getElementById('hUser').textContent=G.isGuest?'Guest':G.nick;
   const isBattle=G.mode==='battle';
   document.getElementById('battleBanner').style.display=isBattle?'flex':'none';
   document.getElementById('timerNum').className='timer-num'+(isBattle?' battle':'');
   document.getElementById('progFill').className='prog-fill'+(isBattle?' battle':'');
   if(isBattle){
-    document.getElementById('bbRoomCode').textContent=G.battleCode;
-    renderBattlePlayers();
+    document.getElementById('bbRoom').textContent=G.battleCode;
+    startBattleListener();
   }
   goScreen('gameScreen');
-  if(saveData) loadSavedGame(saveData);
+  if(saveData) loadSave(saveData);
   else doNewGame(forceSeed);
 }
 
-/* ══════════════════════════════════════════
-   GAME LOGIC
-══════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   BATTLE LISTENER (Firebase realtime)
+══════════════════════════════════════════════════ */
+function startBattleListener(){
+  unlistenRoom();
+  G._seenFinishers={};
+  G._roomUnsub=listenRoom(G.battleCode, room=>{
+    if(!room)return;
+    // Update player dots
+    renderBattleDots(room);
+    // Check for new finishers
+    const finishers=room.finishers||{};
+    Object.entries(finishers).forEach(([nick,data])=>{
+      if(!G._seenFinishers[nick]){
+        G._seenFinishers[nick]=true;
+        const myNick=G.nick||'';
+        if(nick!==myNick&&!G.done){
+          const pos=Object.keys(finishers).length;
+          showBattleNotif(nick, pos===1);
+        }
+      }
+    });
+  });
+}
+function unlistenRoom(){if(G._roomUnsub){G._roomUnsub();G._roomUnsub=null;}}
+function renderBattleDots(room){
+  const el=document.getElementById('bbPlayers');if(!el)return;
+  el.innerHTML='';
+  const players=room.players||{};
+  const finishers=room.finishers||{};
+  const nicks=Object.keys(players);
+  const max=room.maxPlayers||G.battleMaxPlayers;
+  for(let i=0;i<max;i++){
+    const d=document.createElement('div');
+    const nick=nicks[i];
+    d.className='bp-dot'+(nick?finishers[nick]?' done':' in':'');
+    el.appendChild(d);
+  }
+}
+function showBattleNotif(nick,isFirst){
+  document.getElementById('bnTitle').textContent=isFirst?'FIRST FINISH!':'COMPLETED!';
+  document.getElementById('bnBody').textContent=isFirst
+    ?`${nick} solved it first! You're racing for 2nd place.`
+    :`${nick} has finished the puzzle!`;
+  openModal('battleNotifModal');
+}
+
+/* ══════════════════════════════════════════════════
+   GAME
+══════════════════════════════════════════════════ */
 function doNewGame(seed){
   G.seed=seed??(Date.now()%99999+1);
   const{puzzle,solution}=makePuzzle(G.seed);
@@ -762,10 +903,9 @@ function doNewGame(seed){
   document.getElementById('noteBtn').classList.remove('is-active');
   document.getElementById('seedTag').textContent='#'+String(G.seed).padStart(5,'0');
   resetTimer();renderAll();startTimer();
-  if(G.mode==='battle')startBattlePoll();
 }
 
-function loadSavedGame(s){
+function loadSave(s){
   G.seed=s.seed;G.puzzle=s.puzzle;G.solution=s.solution;
   G.board=s.board;G.given=s.given;
   G.notes=(s.notes||[]).map(n=>new Set(n));
@@ -776,7 +916,7 @@ function loadSavedGame(s){
   renderAll();startTimer();
 }
 
-function currentSaveData(){
+function currentSave(){
   return{
     seed:G.seed,puzzle:G.puzzle,solution:G.solution,
     board:G.board,given:G.given,
@@ -788,19 +928,17 @@ function currentSaveData(){
   };
 }
 
-function saveAndGoProfile(){
+async function saveAndGoProfile(){
   if(!G.isGuest&&!G.done&&G.mode==='solo'){
-    saveGame(G.nick,currentSaveData());
-    showToast('Game saved!');
+    try{await saveGame(G.nick,currentSave());showToast('Game saved ✓');}catch(e){showToast('Save failed');}
   }
-  stopTimer();clearBattlePoll();
-  if(!G.isGuest)showProfile();
+  stopTimer();unlistenRoom();
+  if(!G.isGuest)await showProfile();
   else goScreen('introScreen');
 }
 
 /* ─── render ─── */
 function renderAll(){renderGrid();renderMistakes();renderProgress();}
-
 function renderGrid(){
   const el=document.getElementById('grid');el.innerHTML='';
   for(let i=0;i<81;i++){
@@ -827,37 +965,10 @@ function renderGrid(){
     el.appendChild(cell);
   }
 }
-function renderMistakes(){
-  const el=document.getElementById('errDots');el.innerHTML='';
-  for(let i=0;i<G.maxMistakes;i++){const d=document.createElement('div');d.className='e-dot'+(i<G.mistakes?' lit':'');el.appendChild(d);}
-}
-function renderProgress(){
-  const correct=G.board.filter((v,i)=>!G.given[i]&&v===G.solution[i]).length;
-  const total=G.given.filter(v=>!v).length;
-  document.getElementById('progFill').style.width=(total?correct/total*100:0)+'%';
-}
-function renderNumpad(){
-  const np=document.getElementById('numpad');np.innerHTML='';
-  for(let n=1;n<=9;n++){
-    const btn=document.createElement('button');btn.className='num-btn'+(G.noteMode?' note-on':'');
-    btn.textContent=n;btn.addEventListener('click',()=>doInput(n));np.appendChild(btn);
-  }
-}
-function renderBattlePlayers(){
-  const el=document.getElementById('bbPlayers');el.innerHTML='';
-  const room=getBattleRoom(G.battleCode);
-  const max=room?room.maxPlayers:G.battleMaxPlayers;
-  const players=room?room.players:[];
-  const finishers=room?room.finishers.map(f=>f.nick):[];
-  for(let i=0;i<max;i++){
-    const d=document.createElement('div');
-    const nick=players[i];
-    d.className='bp-dot'+(nick?finishers.includes(nick)?' done':' in':'');
-    el.appendChild(d);
-  }
-}
+function renderMistakes(){const el=document.getElementById('errDots');el.innerHTML='';for(let i=0;i<G.maxMistakes;i++){const d=document.createElement('div');d.className='e-dot'+(i<G.mistakes?' lit':'');el.appendChild(d);}}
+function renderProgress(){const c=G.board.filter((v,i)=>!G.given[i]&&v===G.solution[i]).length;const t=G.given.filter(v=>!v).length;document.getElementById('progFill').style.width=(t?c/t*100:0)+'%';}
+function renderNumpad(){const np=document.getElementById('numpad');np.innerHTML='';for(let n=1;n<=9;n++){const btn=document.createElement('button');btn.className='num-btn'+(G.noteMode?' note-on':'');btn.textContent=n;btn.addEventListener('click',()=>doInput(n));np.appendChild(btn);}}
 
-/* ─── cell actions ─── */
 function selectCell(i){G.selected=i;renderGrid();}
 function doInput(n){
   const i=G.selected;if(i===-1||G.given[i]||G.done)return;
@@ -879,19 +990,16 @@ function doErase(){const i=G.selected;if(i===-1||G.given[i]||G.done)return;G.his
 function doUndo(){if(!G.history.length)return;const h=G.history.pop();G.board[h.i]=h.b;G.notes[h.i]=h.ns;G.selected=h.i;renderGrid();renderProgress();}
 function toggleNote(){G.noteMode=!G.noteMode;document.getElementById('noteBtn').classList.toggle('is-active',G.noteMode);renderNumpad();}
 
-/* ─── win ─── */
-function checkWin(){
+async function checkWin(){
   if(!G.board.every((v,i)=>v===G.solution[i]))return;
-  G.done=true;stopTimer();clearBattlePoll();
-  if(G.mode==='battle'){handleBattleWin();}
-  else{handleSoloWin();}
+  G.done=true;stopTimer();unlistenRoom();
+  if(G.mode==='battle')await handleBattleWin();
+  else await handleSoloWin();
 }
 
-function handleSoloWin(){
+async function handleSoloWin(){
   if(!G.isGuest){
-    addSoloStar(G.nick);
-    updateBestTime(G.nick,G.timer);
-    removeSave(G.nick,G.seed);
+    try{await addSoloStar(G.nick);await updateBestTime(G.nick,G.timer);await removeSave(G.nick,G.seed);}catch(e){}
   }
   spawnStars('⭐',3);
   setTimeout(()=>{
@@ -900,132 +1008,64 @@ function handleSoloWin(){
     document.getElementById('winIcon').textContent='🎉';
     document.getElementById('winTitle').textContent='SOLVED!';
     document.getElementById('winStars').innerHTML='⭐⭐⭐';
-    document.getElementById('winBody').textContent=G.isGuest?'Brilliant. Sign in to save your stars!':'Solo star earned! Keep going.';
+    document.getElementById('winBody').textContent=G.isGuest?'Brilliant! Sign in to save your stars.':'Solo star earned! ⭐';
     openModal('winModal');
   },500);
 }
 
-function handleBattleWin(){
+async function handleBattleWin(){
   if(!G.battleCode)return;
-  const nick=G.nick||'You';
-  const pos=recordBattleFinish(G.battleCode,nick,G.timer);
-  if(pos===1){
-    // first to finish = winner
-    if(!G.isGuest)addBattleStar(G.nick);
-    spawnStars('🌟',5);
-    setTimeout(()=>{
-      document.getElementById('bWinTime').textContent=fmt(G.timer);
-      document.getElementById('bWinStars').innerHTML='🌟🌟🌟🌟🌟';
-      openModal('battleWinModal');
-      broadcastBattleFinish(nick,true);
-    },500);
-  } else {
-    // not first — show own completion
-    spawnStars('⭐',2);
-    broadcastBattleFinish(nick,false);
-    setTimeout(()=>{
-      document.getElementById('winTime').textContent=fmt(G.timer);
-      document.getElementById('winTime').className='m-time';
-      document.getElementById('winIcon').textContent='✅';
-      document.getElementById('winTitle').textContent='DONE!';
-      document.getElementById('winStars').innerHTML='⭐⭐';
-      document.getElementById('winBody').textContent=`You finished #${pos}. Good effort!`;
-      openModal('winModal');
-    },500);
+  const nick=G.nick||'Guest';
+  try{
+    await recordFinish(G.battleCode,nick,G.timer);
+    const room=await getRoom(G.battleCode);
+    const finishers=room?Object.keys(room.finishers||{}):[nick];
+    const pos=finishers.indexOf(nick)+1||1;
+    if(pos===1){
+      if(!G.isGuest)try{await addBattleStar(G.nick);}catch(e){}
+      spawnStars('🌟',5);
+      setTimeout(()=>{
+        document.getElementById('bWinTime').textContent=fmt(G.timer);
+        document.getElementById('bWinStars').innerHTML='🌟🌟🌟🌟🌟';
+        openModal('battleWinModal');
+      },500);
+    }else{
+      spawnStars('⭐',2);
+      setTimeout(()=>{
+        document.getElementById('winTime').textContent=fmt(G.timer);
+        document.getElementById('winTime').className='m-time';
+        document.getElementById('winIcon').textContent='✅';
+        document.getElementById('winTitle').textContent='DONE!';
+        document.getElementById('winStars').innerHTML='⭐⭐';
+        document.getElementById('winBody').textContent=`You finished #${pos}. Well played!`;
+        openModal('winModal');
+      },500);
+    }
+  }catch(e){
+    setTimeout(()=>{openModal('winModal');},500);
   }
 }
 
-function broadcastBattleFinish(nick,isFirst){
-  // Store notification in localStorage for other players to pick up
-  const rooms=getBattleRooms();
-  if(!rooms[G.battleCode])return;
-  if(!rooms[G.battleCode].notifications)rooms[G.battleCode].notifications=[];
-  rooms[G.battleCode].notifications.push({nick,isFirst,time:Date.now()});
-  saveBattleRooms(rooms);
-}
-
-/* ─── battle poll ─── */
-let _lastNotifCount=0;
-function startBattlePoll(){
-  clearBattlePoll();
-  _lastNotifCount=0;
-  G._pollInterval=setInterval(()=>{
-    renderBattlePlayers();
-    const room=getBattleRoom(G.battleCode);
-    if(!room)return;
-    const notifs=room.notifications||[];
-    if(notifs.length>_lastNotifCount){
-      for(let k=_lastNotifCount;k<notifs.length;k++){
-        const nf=notifs[k];
-        const myNick=G.nick||'You';
-        if(nf.nick!==myNick&&!G.done){
-          showBattleNotif(nf.nick,nf.isFirst);
-        }
-      }
-      _lastNotifCount=notifs.length;
-    }
-  },2000);
-}
-function clearBattlePoll(){clearInterval(G._pollInterval);}
-
-function showBattleNotif(nick,isFirst){
-  document.getElementById('bnTitle').textContent=isFirst?'FIRST FINISH!':'SOMEONE DONE!';
-  document.getElementById('bnBody').textContent=
-    isFirst?`${nick} solved it first! You're racing for 2nd.`:`${nick} has completed the puzzle!`;
-  openModal('battleNotifModal');
-}
-
-/* ══════════════════════════════════════════
+/* ══════════════════════════════════════════════════
    TIMER
-══════════════════════════════════════════ */
+══════════════════════════════════════════════════ */
 function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function startTimer(){stopTimer();G.running=true;syncPauseBtn();G._ti=setInterval(()=>{G.timer++;document.getElementById('timerNum').textContent=fmt(G.timer);},1000);}
 function stopTimer(){clearInterval(G._ti);G.running=false;syncPauseBtn();}
 function resumeTimer(){if(!G.done)startTimer();}
 function resetTimer(){stopTimer();G.timer=0;document.getElementById('timerNum').textContent='00:00';document.getElementById('timerNum').classList.remove('dim');}
-function doToggleTimer(){
-  if(G.running){stopTimer();document.getElementById('timerNum').classList.add('dim');}
-  else{startTimer();document.getElementById('timerNum').classList.remove('dim');}
-}
-function syncPauseBtn(){
-  const run=G.running;
-  document.getElementById('pauseIcon').textContent=run?'⏸':'▶';
-  document.getElementById('pauseLbl').textContent=run?'Pause':'Resume';
-  document.getElementById('pauseBtn').classList.toggle('is-active',!run);
-}
+function doToggleTimer(){if(G.running){stopTimer();document.getElementById('timerNum').classList.add('dim');}else{startTimer();document.getElementById('timerNum').classList.remove('dim');}}
+function syncPauseBtn(){const r=G.running;document.getElementById('pauseIcon').textContent=r?'⏸':'▶';document.getElementById('pauseLbl').textContent=r?'Pause':'Resume';document.getElementById('pauseBtn').classList.toggle('is-active',!r);}
 
-/* ══════════════════════════════════════════
-   NEW GAME
-══════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   MISC
+══════════════════════════════════════════════════ */
 function askNewGame(){stopTimer();openModal('confirmModal');}
-
-/* ══════════════════════════════════════════
-   STAR ANIMATION
-══════════════════════════════════════════ */
-function spawnStars(emoji,count){
-  for(let i=0;i<count;i++){
-    setTimeout(()=>{
-      const el=document.createElement('div');
-      el.className='float-star';
-      el.textContent=emoji;
-      el.style.left=Math.random()*80+10+'vw';
-      el.style.top=Math.random()*40+30+'vh';
-      document.body.appendChild(el);
-      setTimeout(()=>el.remove(),1000);
-    },i*150);
-  }
-}
-
-/* ══════════════════════════════════════════
-   MODAL / TOAST
-══════════════════════════════════════════ */
+function spawnStars(e,n){for(let i=0;i<n;i++)setTimeout(()=>{const el=document.createElement('div');el.className='float-star';el.textContent=e;el.style.left=Math.random()*80+10+'vw';el.style.top=Math.random()*40+30+'vh';document.body.appendChild(el);setTimeout(()=>el.remove(),1000);},i*150);}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 
-/* ══════════════════════════════════════════
-   KEYBOARD
-══════════════════════════════════════════ */
 document.addEventListener('keydown',e=>{
   if(G.selected===-1)return;
   const n=parseInt(e.key);if(n>=1&&n<=9)doInput(n);
@@ -1035,9 +1075,6 @@ document.addEventListener('keydown',e=>{
   else{const d={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1};if(d[e.key]!=null){e.preventDefault();const nx=G.selected+d[e.key];if(nx>=0&&nx<81)selectCell(nx);}}
 });
 
-/* ══════════════════════════════════════════
-   BOOT
-══════════════════════════════════════════ */
 renderNumpad();
 setAuthTab('login');
 </script>
